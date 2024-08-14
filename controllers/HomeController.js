@@ -1,5 +1,6 @@
 const { Op } = require('sequelize');
-const { Word } = require('../models');
+const { Word, Room, Player } = require('../models');
+const { options } = require('pg/lib/defaults');
 class HomeController {
   static async home(req, res, next) {
     try {
@@ -45,31 +46,82 @@ class HomeController {
     }
   }
 
+  static async getRooms(req, res, next) {
+    try {
+      let { name, isFinished } = req.query
+      let options = {
+        where: {
+          isFinished: {
+            [Op.eq]: false
+          }
+        },
+        attributes: {
+          exclude: ["createdAt", "updatedAt"]
+        }
+      }
+      if (name) {
+        options.where.name = {
+          [Op.iLike]: `${name}`
+        }
+      }
+      if (isFinished) {
+        options.where.isFinished = {
+          [Op.eq]: isFinished
+        }
+      }
+      const rooms = await Room.findAll(options)
+      res.status(200).json(rooms)
+    } catch (error) {
+      next(error)
+    }
+  }
+
   static async makeRoom(req, res, next) {
     try {
-      const io = req.io;
-      // Get the `io` instance from the request object
-      // console.log(io, "<<< IO")
-      io.on("connection", (socket) => {
-        console.log(socket.id, "<<< SOCKET ID CONNECT")
-      })
-      // Emit a socket event when this endpoint is accessed
-      io.emit('room-created', { roomId: "some-room-id" });
-      io.on("disconnect", (socket) => {
-        console.log(socket.id, "<< SOCKET ID DISCONNECT")
-      })
-      res.status(200).json({ message: "Room created!" });
+      const { name, username } = req.body
+      if (!name) {
+        throw { name: "RoomNameEmpty" }
+      }
+      if (!username) {
+        throw { name: "UserNameEmpty" }
+      }
+      const createdRoom = await Room.create({ name })
+      const createdPlayer = await Player.create({ RoomId: createdRoom.id, username: username })
+      const data = { room: createdRoom, player: createdPlayer }
+      res.status(201).json({ message: "Room and player created!", data });
     } catch (error) {
       next(error);
     }
   }
-
-
-  static setupSocketEvents(io, socket) {
-    // Handle specific Socket.IO events here
-
-    console.log("masukk")
-    socket.emit('some-event', "test emit");
+  static async joinRoom(req, res, next) {
+    try {
+      const { roomId } = req.params
+      const { username } = req.body
+      if (!roomId) {
+        throw { name: "RoomIdEmpty" }
+      }
+      const foundRoom = await Room.findByPk(roomId)
+      if (!foundRoom) {
+        throw { name: "RoomNotFound" }
+      }
+      if (foundRoom.playerCount > 4) {
+        throw { name: "RoomIsFull" }
+      }
+      if (!username) {
+        throw { name: "UserNameEmpty" }
+      }
+      const createdPlayer = await Player.create({ RoomId: foundRoom.id, username: username })
+      if (createdPlayer) {
+        await Room.increment("playerCount", {
+          where: {
+            id: foundRoom.id
+          }
+        })
+      }
+      res.status(201).json({ message: "Player joined room!", player: createdPlayer });
+    } catch (error) {
+      next(error);
+    }
   }
 }
 
