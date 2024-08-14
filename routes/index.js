@@ -7,6 +7,7 @@ router.get('/random-words', HomeController.randomWords);
 router.post('/check-word', HomeController.checkWord);
 router.get("/rooms", HomeController.getRooms)
 router.post("/rooms", HomeController.makeRoom)
+router.get("/rooms/:roomId", HomeController.roomDetail)
 router.post("/rooms/:roomId/join", HomeController.joinRoom)
 router.use(errorHandler)
 

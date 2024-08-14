@@ -1,58 +1,64 @@
 const Helper = require("../helpers/helpers");
+const { Word, Player, Room } = require('../models');
 
 function setupRoom(io) {
-  const roomNamespace = io.of("/socket-rooms");
 
-  roomNamespace.on("connection", (socket) => {
-    console.log(`Socket ${socket.id} connected to /socket-rooms namespace`);
+  let question;
 
-    socket.on("create room", async ({ name, username }) => {
-      try {
-        const response = await Helper.makeRoom(name, username)
-        const room = response.data.room;
-        const player = response.data.player
+  io.on("connection", (socket) => {
+    console.log(socket.id, '<<< SOCKET');
 
-        socket.join(room.id)
-
-        console.log(`${username} (${socket.id} created and joined room ${room.id})`);
-
-        socket.emit("room created", { room: room.id, username, playerId: player.id });
-        socket.to(room.id).emit("user joined", { username, playerId: player.id })
-
-      } catch (error) {
-        console.log("Error creating room:", error.message || error);
-        socket.emit("error", error.message || "Failed to create room");
-      }
-    })
-
-    socket.on("join room", async ({ roomId, username }) => {
-      try {
-        const response = await Helper.joinRoom(roomId, username)
-
-        const player = response.player
-
-        socket.join(roomId)
-        console.log(`${username} (${socket.id}) has joined room ${roomId}`);
-
-        socket.emit("room joined", { roomId, username, playerId: player.id });
-        socket.to(roomId).emit("user joined", { username, playerId: player.id });
-
-      } catch (error) {
-        console.log("Error joining room:", error.response?.data || error.message);
-        socket.emit("error", error.response?.data?.message || "Failed to join room");
-      }
-    });
-
-    socket.on("send message", ({ room, message }) => {
-      if (room && message) {
-        console.log(`Message received in room '${room}': ${message}`);
-        roomNamespace.to(room).emit("new message", { sender: socket.id, message });
+    socket.on('start-game', async () => {
+      if (question) {
+        io.emit('set-question', question);
       } else {
-        socket.emit("error", "Room ID and message are required to send a message.");
+        const randomWord = Math.ceil(Math.random() * 108047);
+        const { id, word } = await Word.findByPk(randomWord);
+        const randomShow = Math.floor(Math.random() * Math.floor(word.length / 2));
+        const shortWord = word.slice(0, randomShow + 1)
+        question = shortWord;
+        io.emit('set-question', question);
       }
     });
-    socket.on("disconnect", () => {
-      console.log(`Socket ${socket.id} disconnected`);
+
+    socket.on('change-turn', arg => {
+      socket.broadcast.emit('set-turn', arg);
+    });
+
+    socket.on('change-question', async () => {
+        const randomWord = Math.ceil(Math.random() * 108047);
+        const { id, word } = await Word.findByPk(randomWord);
+        const randomShow = Math.floor(Math.random() * Math.floor(word.length / 2));
+        const shortWord = word.slice(0, randomShow + 1)
+        question = shortWord;
+        io.emit('set-question', question);
+    });
+
+    socket.on('change-falseCount', arg => {
+      io.emit('set-falseCount', arg);
+    });
+
+    socket.on('false-ans', async (arg) => {
+      const findUser = await Player.findByPk(arg.playerId);
+      await findUser.decrement({
+        lives: 1
+      });
+
+      const data = await Room.findByPk(arg.roomId, {
+        include: {
+          model: Player,
+          attributes: {
+            exclude: ['createdAt', 'updatedAt']
+          },
+          order: [
+            ['id', 'ASC']
+          ]
+        },
+        attributes: {
+          exclude: ['createdAt', 'updatedAt']
+        }
+      });
+      io.emit('set-room', data);
     });
   });
 }
