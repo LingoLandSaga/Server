@@ -14,10 +14,30 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Room.init({
-    name: DataTypes.STRING,
-    winner: DataTypes.STRING,
-    playerCount: DataTypes.INTEGER,
-    isFinished: DataTypes.BOOLEAN
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: {
+          msg: "Room name is required"
+        },
+        notEmpty: {
+          msg: "Room name is required"
+        }
+      }
+    },
+    winner: {
+      type: DataTypes.STRING,
+      defaultValue: "TBD"
+    },
+    playerCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1
+    },
+    isFinished: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    }
   }, {
     sequelize,
     modelName: 'Room',

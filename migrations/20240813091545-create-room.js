@@ -10,10 +10,11 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       name: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false
       },
       winner: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       playerCount: {
         type: Sequelize.INTEGER

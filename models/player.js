@@ -14,9 +14,34 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Player.init({
-    username: DataTypes.STRING,
-    lives: DataTypes.INTEGER,
-    RoomId: DataTypes.INTEGER
+    username: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: {
+          msg: "Player name is required"
+        },
+        notNull: {
+          msg: "Player name is required"
+        }
+      }
+    },
+    lives: {
+      type: DataTypes.INTEGER,
+      defaultValue: 3
+    },
+    RoomId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      validate: {
+        notEmpty: {
+          msg: "Roomd ID is required"
+        },
+        notNull: {
+          msg: "Roomd ID is required"
+        },
+      }
+    }
   }, {
     sequelize,
     modelName: 'Player',

@@ -10,7 +10,8 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       username: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false
       },
       lives: {
         type: Sequelize.INTEGER
@@ -20,7 +21,8 @@ module.exports = {
         references: {
           model: 'Rooms',
           key: 'id'
-        }
+        },
+        allowNull: false
       },
       createdAt: {
         allowNull: false,
