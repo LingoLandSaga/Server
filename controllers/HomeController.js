@@ -57,11 +57,14 @@ class HomeController {
         },
         attributes: {
           exclude: ["createdAt", "updatedAt"]
+        },
+        include: {
+          model: Player
         }
       }
       if (name) {
         options.where.name = {
-          [Op.iLike]: `${name}`
+          [Op.iLike]: `%${name}%`
         }
       }
       if (isFinished) {
