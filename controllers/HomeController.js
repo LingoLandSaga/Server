@@ -146,6 +146,19 @@ class HomeController {
       next(error);
     }
   }
+  static async updateRoomStatus(req, res, next) {
+    try {
+      const { roomId } = req.params
+      await Room.update({ isFinished: true }, {
+        where: {
+          id: roomId
+        }
+      })
+      res.status(200).json({ message: "Game has finished, thank you for playing" })
+    } catch (error) {
+      next(error)
+    }
+  }
 }
 
 module.exports = HomeController

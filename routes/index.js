@@ -10,6 +10,7 @@ router.post("/rooms", HomeController.makeRoom)
 router.get("/rooms/:roomId", HomeController.roomDetail)
 router.post("/rooms/:roomId/join", HomeController.joinRoom)
 router.get("/rooms/:roomId", HomeController.roomDetail)
+router.put("/rooms/:roomId", HomeController.updateRoomStatus)
 router.use(errorHandler)
 
 module.exports = router
