@@ -123,6 +123,26 @@ class HomeController {
       next(error);
     }
   }
+
+  static async roomDetail(req, res, next) {
+    try {
+      const { roomId } = req.params;
+      const data = await Room.findByPk(roomId, {
+        include: {
+          model: Player,
+          attributes: {
+            exclude: ['createdAt', 'updatedAt']
+          }
+        },
+        attributes: {
+          exclude: ['createdAt', 'updatedAt']
+        }
+      });
+      res.status(200).json(data);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = HomeController
